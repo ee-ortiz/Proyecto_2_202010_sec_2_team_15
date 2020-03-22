@@ -1,11 +1,20 @@
 package controller;
 
+import java.text.Collator;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Scanner;
 
+import com.sun.xml.internal.ws.api.streaming.XMLStreamReaderFactory.Default;
+
+import model.data_structures.ArregloDinamico;
 import model.data_structures.Comparendo;
 import model.data_structures.IArregloDinamico;
 import model.data_structures.ICola;
 import model.data_structures.IPila;
+import model.data_structures.Queue;
+import model.data_structures.SeparateChaining;
+import model.logic.GeoJSONProcessing;
 import model.logic.Modelo;
 import view.View;
 
@@ -19,9 +28,11 @@ public class Controller {
 
 	private boolean cargado;
 	public static String PATH = "./data/comparendos_dei_2018_small.geojson";
-	public static String PATH2 = "./data/comparendos_dei_2018.geojson";
+	public static String PATH2 = "./data/Comparendos_dei_2018_Bogotá_D.C.geojson";
+	public static String PATH3 = "./data/comparendos_mediano.geojson";
 	private Comparable<Comparendo>[] aOrdenar;
 	private Comparable<Comparendo>[] copiaPrimera;
+	SeparateChaining<String, Comparendo> comps;
 
 	/**
 	 * Crear la vista y el modelo del proyecto
@@ -50,15 +61,28 @@ public class Controller {
 					modelo = new Modelo();
 
 					long start = System.currentTimeMillis();
-					modelo.cargar(PATH2);
-					IArregloDinamico<Comparendo> comps = modelo.darArreglo();
+					modelo.cargar(PATH2);			
 					long end = System.currentTimeMillis();
-
 					view.printMessage("Tiempo de carga (s): " + (end-start)/1000.0);
-					view.printMessage("El numero de datos cargados es: " + comps.darTamano());
-					view.printMessage("El primer comparendo cargado es: " + comps.darElemento(0).retornarDatos());
-					view.printMessage("El ultimo comparendo cargado es: "+ comps.darElemento(comps.darTamano()-1).retornarDatos() +"\n");
+
+					comps = modelo.darSeparateChaining();	
+
+					view.printMessage("El Total de comparendos leidos es: " + (int)comps.numeroTotalDeValores());
+
+					modelo.darObjetoJsonGson().retornarPrimerYUltimoComparendo();
+
+					view.printMessage("El numero de duplas  (K, V) del Separate Chaining (valor N) es: " + comps.size());
+
+					view.printMessage("El tamaño inicial (valor M inicial) del Separate Chaining es: " + modelo.darNumeroMInicial());
+
+					view.printMessage("El tamaño final (valor M final) del Separate Chaining es: " + comps.TamañoDeLaHastTable());
+
+					view.printMessage("El factor de carga final (N/M) del Separate Chaining es: " + (double)comps.size()/(double)comps.TamañoDeLaHastTable());
+
+					view.printMessage("El numero de rehashes que tuvo el Separate Chaining es: " + comps.darNumeroReHashes());
+
 					cargado = true;
+
 				}
 
 				else{
@@ -66,105 +90,93 @@ public class Controller {
 					view.printMessage("Los datos contenidos en los archivos sólo se pueden leer una vez" +"\n");
 				}
 
+				view.printMessage("");
+
 				break;			
 
-				//Mostrar:
-				// El tiempo en milisegundos que tomó el algoritmo realizando el ordenamiento 
-				// Los 10 primeros comparendos y los 10 últimos comparendos resultado del ordenamiento.
+
 			case 2:
-				if(cargado == true){
-					copiaPrimera  = modelo.copiarComparendos();	
-					view.printMessage("El numero de comparendos que contiene el nuevo arreglo es: " + copiaPrimera.length + "\n");
-				}
-				else{
-					view.printMessage("Aun no has cargado los comparendos");
-				}
+				//caso andres
+
 				break;
 
 			case 3:
-				aOrdenar = copiaPrimera;
-				long start1 = System.currentTimeMillis();
-				modelo.shellSort(aOrdenar);
-				long end1 = System.currentTimeMillis();
-				view.printMessage("Tiempo de carga (s): " + (end1-start1)/1000.0);
 
-				String rta1 = "";
-				String rta2 = "";
+				view.printMessage("Ingrese una fecha de la siguiente forma (2018/12/24) si el mes o dia es de un solo dígito por favor ingrese un '0' antes (2018/02/04) ");
 
-				int i = 0;
-				while(i<10){
-					Comparendo aMostarInicial = (Comparendo) aOrdenar[i];
-					Comparendo aMostraFinal = (Comparendo) aOrdenar[aOrdenar.length -10 +i];
-					rta1 += "- " + aMostarInicial.retornarDatos() + "\n";
-					rta2 += "- " + aMostraFinal.retornarDatos() + "\n";	
-					i++;
+				String key = "";
+				String fechaKey = lector.next();
+				String fechasKeys[] = fechaKey.split("/");
+
+				try{
+					if(fechasKeys[1].length() ==1){
+						fechasKeys[1] = "0" + fechasKeys[1];
+					}
+					if(fechasKeys[2].length() ==1){
+						fechasKeys[2] = "0" + fechasKeys[2];
+					}
+
+					fechaKey = fechasKeys[0] + fechasKeys[1] + fechasKeys[2];
 
 				}
-				view.printMessage("Los 10 comparendos iniciales son:");
-				view.printMessage(rta1);
-				view.printMessage("Los 10 comparendos finales son:");
-				view.printMessage(rta2);
+
+				catch (Exception e){
+
+					view.printMessage("Fecha inválida");
+					break;
+
+				}
+
+				view.printMessage("Ingrese una clase de vehiculo de la siguiente forma (MOTOCICLETA) si la palabra tiene tilde por favor escribala ");
+				String claseVehiKey = lector.next().trim();
+
+				view.printMessage("Ingrese una infraccion de la siguiente forma (C02) ");
+				String infraccionKey = lector.next().trim();
+
+				key = fechaKey+ claseVehiKey + infraccionKey;
+
+				Iterator<Comparendo> iter = comps.getSet(key);
+
+				if(iter!=null){
+
+					IArregloDinamico<Comparendo> buscados = new ArregloDinamico<>(20);
+
+					while(iter.hasNext()){
+
+						Comparendo elemento = iter.next();
+
+						buscados.agregar(elemento);
+
+					}
+
+					Comparable[] comparableBuscados = modelo.copiarArreglo(buscados);
+					modelo.sortParaMerge(comparableBuscados, "descendente", null);
+
+					IArregloDinamico<Comparendo> rta = modelo.retornarArregloDeComparendos(comparableBuscados);
+
+					view.printMessage("El numero de comparendos existentes con la fecha, clase de vehiculo e infraccion que ingresaste es: " + rta.darTamano());
+					view.printMessage("Los comparendos son: ");
+					for(int i = 0; i<rta.darTamano(); i++){
+
+						view.printMessage("-" + rta.darElemento(i).retornarDatosTaller5());
+					}
+
+				}
+
+				else{
+
+					view.printMessage("La llave ingresada no existe");
+				}
+
+				view.printMessage("");
 
 				break;
 
 			case 4:
-				// caso de ándres
-				aOrdenar = copiaPrimera;
-				long start3 = System.currentTimeMillis();
-				modelo.sortParaMerge(aOrdenar);
-				long end3 = System.currentTimeMillis();
-				view.printMessage("Tiempo de carga (s): " + (end3-start3)/1000.0);
 
-				String rtaMergeSort = "";
-				String rtaMergeSort2 = "";
-
-				int as = 0;
-				while(as<10){
-					Comparendo aMostarInicial = (Comparendo) aOrdenar[as];
-					Comparendo aMostraFinal = (Comparendo) aOrdenar[aOrdenar.length -10 +as];
-					rtaMergeSort += "- " + aMostarInicial.retornarDatos() + "\n";
-					rtaMergeSort2 += "- " + aMostraFinal.retornarDatos() + "\n";	
-					as++;
-
-				}
-				view.printMessage("Los 10 comparendos iniciales son:");
-				view.printMessage(rtaMergeSort);
-				view.printMessage("Los 10 comparendos finales son:");
-				view.printMessage(rtaMergeSort2);
+				modelo.requerimiento3();
 
 				break;
-
-			case 5:
-
-				aOrdenar = copiaPrimera;
-				long start2 = System.currentTimeMillis();
-				// Algoritmo quickSort
-				modelo.sort(aOrdenar);
-				long end2 = System.currentTimeMillis();
-				view.printMessage("Tiempo de carga (s): " + (end2-start2)/1000.0);
-
-				String rtaQuickSort1 = "";
-				String rtaQuickSort2 = "";
-
-				int j = 0;
-				while(j<10){
-					Comparendo aMostarInicial = (Comparendo) aOrdenar[j];
-					Comparendo aMostraFinal = (Comparendo) aOrdenar[aOrdenar.length -10 +j];
-					rtaQuickSort1 += "- " + aMostarInicial.retornarDatos() + "\n";
-					rtaQuickSort2 += "- " + aMostraFinal.retornarDatos() + "\n";	
-					j++;
-
-				}
-				view.printMessage("Los 10 comparendos iniciales son:");
-				view.printMessage(rtaQuickSort1);
-				view.printMessage("Los 10 comparendos finales son:");
-				view.printMessage(rtaQuickSort2);
-
-
-
-
-				break;
-
 
 			default: 
 
