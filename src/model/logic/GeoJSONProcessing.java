@@ -21,6 +21,8 @@ import model.data_structures.Comparendo;
 import model.data_structures.IArregloDinamico;
 import model.data_structures.ICola;
 import model.data_structures.IPila;
+import model.data_structures.LinearProbing;
+import model.data_structures.MaxHeapCP;
 import model.data_structures.Pila;
 import model.data_structures.SeparateChaining;
 
@@ -28,23 +30,22 @@ import model.data_structures.SeparateChaining;
 
 public class GeoJSONProcessing {
 
-	private Comparendo primerComparendo;
-	private Comparendo ultimoComparendo;
+	private Comparendo comparendoMayor;
+
+	private int totalComps;
 
 	// Solucion de carga de datos publicada al curso Estructuras de Datos 2020-10
-	public void cargarDatos(SeparateChaining<String, Comparendo> hashTable1, String direccion){
+	public void cargarDatos(SeparateChaining<String, Comparendo> hashTable1, LinearProbing<String, Comparendo> hashTable2, MaxHeapCP<Comparendo> colaPrioridad, String direccion){
 
 		JsonReader reader;
 		try {
+			int objectIDMayor = 0;
+			int conteo = 0;
 			reader = new JsonReader(new FileReader(direccion));
 			JsonElement elem = JsonParser.parseReader(reader);
 			JsonArray e2 = elem.getAsJsonObject().get("features").getAsJsonArray();
 
 			SimpleDateFormat parser=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-
-			Comparendo primero = null;
-			Comparendo ultimo = null;
-			boolean compPrimero = false;
 
 			for(JsonElement e: e2) {
 				Comparendo c = new Comparendo();
@@ -65,6 +66,10 @@ public class GeoJSONProcessing {
 				c.TIPO_SERVI = e.getAsJsonObject().get("properties").getAsJsonObject().get("TIPO_SERVICIO").getAsString();
 				if(c.TIPO_SERVI.equals("PÃºblico")){
 					c.TIPO_SERVI = "Público   ";
+				}
+
+				if(c.TIPO_SERVI.equals("Oficial")){
+					c.TIPO_SERVI = "Oficial   ";
 				}
 				c.INFRACCION = e.getAsJsonObject().get("properties").getAsJsonObject().get("INFRACCION").getAsString();
 				c.DES_INFRAC = e.getAsJsonObject().get("properties").getAsJsonObject().get("DES_INFRACCION").getAsString();	
@@ -100,19 +105,19 @@ public class GeoJSONProcessing {
 				String key = convertirIntAString(ano) + mes1 + dia1 +  c.CLASE_VEHI.trim() + c.INFRACCION.trim();
 
 				hashTable1.putInSet(key, c);
+				hashTable2.put(key, c);
+				colaPrioridad.insert(c);
 
-				ultimo = c;
-
-				if(compPrimero == false){
-					primero = c;
-					compPrimero = true;				
+				if(c.OBJECTID>objectIDMayor){
+					objectIDMayor = c.OBJECTID;
+					comparendoMayor = c;
 				}
+
+				conteo++;
 
 			}
 
-			primerComparendo = primero;
-			ultimoComparendo = ultimo;
-
+			totalComps = conteo;
 
 		} 
 		catch (FileNotFoundException | ParseException e) {
@@ -129,11 +134,23 @@ public class GeoJSONProcessing {
 
 	}
 
-	public void retornarPrimerYUltimoComparendo(){
+	public void retornarCompObjectIDMayor(){
 
-		System.out.println("El primer comparendo leido es: " + primerComparendo.retornarDatos());
-		System.out.println("El ultimo comparendo leido es: " + ultimoComparendo.retornarDatos());
+		System.out.println("El comparendo con el mayor ObjectID encontrado es: ");
+		System.out.println(comparendoMayor.retornarDatos());
 
+	}
+
+	public void retornarTotalComps(){
+
+		System.out.println("El total de comparendos leidos es: " + totalComps);
+	}
+
+	public String RetornarDatos(Comparendo comp){
+
+		String rta = "OBJECTID: "+comp.OBJECTID +" FECHA_HORA: " + comp.FECHA_HORA + " INFRACCION: " + comp.INFRACCION + " CLASE_VEHI: "+comp.CLASE_VEHI + " TIPO_SERVI: " +
+				comp.TIPO_SERVI + " LOCALIDAD: "+ comp.LOCALIDAD;
+		return rta;
 	}
 
 }

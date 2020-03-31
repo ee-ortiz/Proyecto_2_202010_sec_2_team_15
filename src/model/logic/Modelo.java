@@ -3,6 +3,9 @@ package model.logic;
 import model.data_structures.ArregloDinamico;
 import model.data_structures.Comparendo;
 import model.data_structures.IArregloDinamico;
+import model.data_structures.LinearProbing;
+import model.data_structures.MaxColaCP;
+import model.data_structures.MaxHeapCP;
 import model.data_structures.SeparateChaining;
 
 import java.util.ArrayList;
@@ -18,8 +21,12 @@ public class Modelo {
 	 * Atributos del modelo del mundo
 	 */
 	private SeparateChaining<String, Comparendo> comps;
+	private LinearProbing<String, Comparendo> comps2;
+	private MaxHeapCP<Comparendo> comps3;
 	private GeoJSONProcessing objetoJsonGson;
-	private int numeroMInicial;
+	private int numeroMInicialSP;
+	private int numeroMInicialLP;
+	public final static int maximoNumeroDatosImpreso = 20;
 
 
 	/**
@@ -27,8 +34,11 @@ public class Modelo {
 	 */
 	public Modelo()
 	{
-		comps = new SeparateChaining<>(2741);
-		numeroMInicial = comps.TamañoDeLaHastTable();
+		comps = new SeparateChaining<>(3011);
+		comps2 = new LinearProbing<>(20011);
+		comps3 = new MaxHeapCP<>(300000);
+		numeroMInicialSP = comps.TamañoDeLaHastTable();
+		numeroMInicialLP = comps2.darTamanoHashTable();
 		objetoJsonGson = new GeoJSONProcessing();
 	}
 
@@ -42,47 +52,6 @@ public class Modelo {
 	}
 
 
-	/**
-	 * Requerimiento buscar dato
-	 * @param dato Dato a buscar
-	 * @return dato encontrado
-	 */
-	public ArrayList<Comparendo> getSet(String dato)
-	{
-		ArrayList<Comparendo> rta = comps.getSetArray(dato);
-
-		return rta;
-	}
-
-	/**
-	 * Requerimiento eliminar dato
-	 * @param dato Dato a eliminar
-	 * @return dato eliminado
-	 */
-	public String eliminar(String dato)
-	{
-		return null;
-	}
-
-
-	public void cargar(String direccion){
-
-		objetoJsonGson.cargarDatos(comps, direccion);
-
-
-	}
-
-
-	public String RetornarDatos(Comparendo comp){
-		//INFRACCION, OBJECTID,
-		//FECHA_HORA, CLASE_VEHI, TIPO_SERVI, LOCALIDAD.
-		String rta = "Codigo de infraccion: "+comp.INFRACCION +" ObjectID: " + comp.OBJECTID + " Fecha y hora: " + comp.FECHA_HORA + " Clase de vehiculo "+comp.CLASE_VEHI + " Tipo de servicio: " +
-				comp.TIPO_SERVI + " Localidad: "+ comp.LOCALIDAD;
-		return rta;
-	}
-
-
-	// solucion adaptada de las presentaciones de sicua
 	public void shellSort(Comparable datos[]){
 
 		int tamano = datos.length;
@@ -253,10 +222,65 @@ public class Modelo {
 
 		}
 	}
+	/**
+	 * Requerimiento buscar dato
+	 * @param dato Dato a buscar
+	 * @return dato encontrado
+	 */
+	public ArrayList<Comparendo> getSet(String dato)
+	{
+		ArrayList<Comparendo> rta = comps.getSetArray(dato);
+
+		return rta;
+	}
+
+	/**
+	 * Requerimiento eliminar dato
+	 * @param dato Dato a eliminar
+	 * @return dato eliminado
+	 */
+	public String eliminar(String dato)
+	{
+		return null;
+	}
+
+
+	public void cargar(String direccion){
+
+		objetoJsonGson.cargarDatos(comps, comps2, comps3, direccion);
+
+	}
+
+
+	public String RetornarDatos(Comparendo comp){
+		//INFRACCION, OBJECTID,
+		//FECHA_HORA, CLASE_VEHI, TIPO_SERVI, LOCALIDAD.
+		String rta = "Codigo de infraccion: "+comp.INFRACCION +" ObjectID: " + comp.OBJECTID + " Fecha y hora: " + comp.FECHA_HORA + " Clase de vehiculo "+comp.CLASE_VEHI + " Tipo de servicio: " +
+				comp.TIPO_SERVI + " Localidad: "+ comp.LOCALIDAD;
+		return rta;
+	}
+
+
+
+
+
 
 	public SeparateChaining<String, Comparendo> darSeparateChaining(){
 
 		return comps;
+	}
+	/**
+	 * retorna el lineal probing
+	 * @return
+	 */
+	public LinearProbing<String, Comparendo> darLinearProbing(){
+
+		return comps2;
+	}
+
+	public MaxHeapCP<Comparendo> darMaxHeapCP(){
+
+		return comps3;
 	}
 
 	public GeoJSONProcessing darObjetoJsonGson(){
@@ -264,9 +288,14 @@ public class Modelo {
 		return objetoJsonGson;
 	}
 
-	public int darNumeroMInicial(){
+	public int darNumeroMInicialSP(){
 
-		return numeroMInicial;
+		return numeroMInicialSP;
+	}
+
+	public int darNumeroMInicialLP(){
+
+		return numeroMInicialLP;
 	}
 
 	public static Comparendo cambiarDeComparableAComparendo(Comparable a){
@@ -376,6 +405,77 @@ public class Modelo {
 		System.out.println("El tiempo máximo del metodo getSet() en Separate Chaining fue: " + tiempoMaximoGetSC + " segundos");
 		System.out.println("El tiempo promedio del metodo getSet() en Separate Chaining fue: " + tiempoPromedioGetSC + " segundos");
 
+		Iterator<String> iter2 = comps2.keys();
+		conteo = 0;
+
+		double tiempoMinimoGetLP = 50.0;
+		double tiempoPromedioGetLP = 0.0;
+		double tiempoMaximoGetLP = -50.0;
+
+		// 8000 llaves conocidas
+		while(iter.hasNext() && conteo<8000 ){
+
+			String keyAct = iter.next();
+
+			long start = System.currentTimeMillis();
+
+			// consulto la llave
+			comps2.getSet(keyAct);
+
+			long end = System.currentTimeMillis();
+
+			double tiempo = (end-start)/1000.0;
+
+			if(tiempo>tiempoMaximoGetLP){
+				tiempoMaximoGetLP = tiempo;
+			}
+
+			if(tiempo<tiempoMinimoGetLP){
+				tiempoMinimoGetLP = tiempo;
+			}
+
+			tiempoPromedioGetLP = tiempoPromedioGetLP + tiempo;
+
+			conteo++;
+		}
+
+		conteo2 = 0;
+
+		prueba = "2017";
+
+		// 2000 llaves desconocidas
+		while(conteo2<2000 ){
+
+			String keyAct1 = prueba + conteo;
+
+			long start = System.currentTimeMillis();
+
+			// consulto la llave
+			comps2.getSet(keyAct1);
+
+			long end = System.currentTimeMillis();
+
+			double tiempo = (end-start)/1000.0;
+
+			if(tiempo>tiempoMaximoGetLP){
+				tiempoMaximoGetLP = tiempo;
+			}
+
+			if(tiempo<tiempoMinimoGetLP){
+				tiempoMaximoGetLP = tiempo;
+			}
+
+			tiempoPromedioGetLP = tiempoPromedioGetLP + tiempo;
+
+			conteo2++;
+		}
+
+		tiempoPromedioGetLP = tiempoPromedioGetLP/10000;
+
+		System.out.println("----------------");
+		System.out.println("El tiempo minimo del metodo getSet() en Linear Probing fue: " + tiempoMinimoGetLP + " segundos");
+		System.out.println("El tiempo máximo del metodo getSet() en Linear Probing fue: " + tiempoMaximoGetLP + " segundos");
+		System.out.println("El tiempo promedio del metodo getSet() en Linear Probing fue: " + tiempoPromedioGetLP + " segundos");
 
 	}
 

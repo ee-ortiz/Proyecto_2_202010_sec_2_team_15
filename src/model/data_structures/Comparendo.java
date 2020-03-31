@@ -21,7 +21,7 @@ public class Comparendo implements Comparable<Comparendo> {
 	public String retornarDatos(){
 		//	Mostrar la información del comparendo (OBJECTID, FECHA_HORA, INFRACCION, CLASE_VEHI, TIPO_SERVI, LOCALIDAD) 
 
-		String rta = "OBJECTID: "+OBJECTID +" FECHA_HORA: " + FECHA_HORA +  " LOCALIDAD: "+ LOCALIDAD +  " INFRACCION: " + INFRACCION;
+		String rta = "OBJECTID: "+OBJECTID +" FECHA_HORA: " + FECHA_HORA + " INFRACCION: " + INFRACCION + " CLASE_VEHICULO: " + CLASE_VEHI + " TIPO_SERVICIO: " + TIPO_SERVI + " LOCALIDAD: " + LOCALIDAD; 
 		return rta;
 	}
 
