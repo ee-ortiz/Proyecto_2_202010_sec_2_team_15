@@ -2,6 +2,7 @@ package test.data_structures;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Comparator;
 import java.util.Iterator;
 
 import org.junit.Before;
@@ -27,11 +28,11 @@ public class TestMaxHeapCP {
 		for(int i = 0; i<51; i++){
 
 			if(i == j){
-				maxHeapCP.insert((Integer)i);
+				maxHeapCP.insert((Integer)i, null);
 			}
 			else{
-				maxHeapCP.insert((Integer)i);
-				maxHeapCP.insert((Integer)j);
+				maxHeapCP.insert((Integer)i, null);
+				maxHeapCP.insert((Integer)j, null);
 			}
 			j--;
 		}
@@ -43,7 +44,8 @@ public class TestMaxHeapCP {
 		setUp1();
 		setUp2();
 
-		Iterator<Integer> iter = maxHeapCP.iterator();
+
+		Iterator<Integer> iter = maxHeapCP.iterator(null);
 
 		int conteo = 100;
 		while(iter.hasNext()){
@@ -70,7 +72,7 @@ public class TestMaxHeapCP {
 		setUp2();
 
 		assertEquals(100, (int)maxHeapCP.max());
-		assertEquals(100, (int)maxHeapCP.delMax());
+		assertEquals(100, (int)maxHeapCP.delMax(null));
 		assertEquals(99, (int)maxHeapCP.max());
 	}
 

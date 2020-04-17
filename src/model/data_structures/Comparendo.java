@@ -1,5 +1,6 @@
 package model.data_structures;
 
+import java.util.Comparator;
 import java.util.Date;
 
 public class Comparendo implements Comparable<Comparendo> {
@@ -30,10 +31,42 @@ public class Comparendo implements Comparable<Comparendo> {
 		return (OBJECTID - comp.OBJECTID);
 	}
 
-	public String retornarDatosTaller5(){
+	// id, tipo de servicio, infracción, fecha-hora y clase de vehículo.
+	public String retornarDatosRequerimiento1A(){
 
-		return "OBJECTID: " + OBJECTID + " FECHA_HORA: " + FECHA_HORA + " TIPO_SERVI: " + TIPO_SERVI
-				+ " CLASE_VEHI: " + CLASE_VEHI + " INFRACCION: " + INFRACCION;		
+		return "OBJECTID: " + OBJECTID + " TIPO_SERVI: " + TIPO_SERVI  + " INFRACCION: " + INFRACCION +" FECHA_HORA: " + FECHA_HORA +
+				" CLASE_VEHI: " + CLASE_VEHI;	
+	}
+
+	// tipo servicio -- infraccion
+	public static class ComparadorXGravedad implements Comparator<Comparendo> {
+
+		Integer comp1;
+		Integer comp2; 
+
+		public int compare(Comparendo c1, Comparendo c2) {
+
+			if(c1.TIPO_SERVI.compareTo(c2.TIPO_SERVI)==0){
+
+				return c1.INFRACCION.compareTo(c2.INFRACCION);
+			}
+
+			else{
+
+				if(c1.TIPO_SERVI.trim().equals("Particular")) comp1 = 1;
+				if(c1.TIPO_SERVI.trim().equals("Público")) comp1 = 3;
+				if(c1.TIPO_SERVI.trim().equals("Oficial")) comp1 = 2;
+
+				if(c2.TIPO_SERVI.trim().equals("Particular")) comp2 = 1;
+				if(c2.TIPO_SERVI.trim().equals("Público")) comp2 = 3;
+				if(c2.TIPO_SERVI.trim().equals("Oficial")) comp2 = 2;
+
+				return comp1.compareTo(comp2);
+
+			}
+
+		}
+
 	}
 
 }

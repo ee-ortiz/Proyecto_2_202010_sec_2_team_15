@@ -2,14 +2,20 @@ package model.logic;
 
 import model.data_structures.ArregloDinamico;
 import model.data_structures.Comparendo;
+import model.data_structures.Comparendo.ComparadorXGravedad;
 import model.data_structures.IArregloDinamico;
 import model.data_structures.LinearProbing;
 import model.data_structures.MaxColaCP;
 import model.data_structures.MaxHeapCP;
+import model.data_structures.Queue;
+import model.data_structures.RedBlackBST;
 import model.data_structures.SeparateChaining;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Random;
 /**
@@ -23,6 +29,8 @@ public class Modelo {
 	private SeparateChaining<String, Comparendo> comps;
 	private LinearProbing<String, Comparendo> comps2;
 	private MaxHeapCP<Comparendo> comps3;
+	private RedBlackBST<Date, Comparendo> comps4;
+	private Queue<Comparendo> comparendos;
 	private GeoJSONProcessing objetoJsonGson;
 	private int numeroMInicialSP;
 	private int numeroMInicialLP;
@@ -37,6 +45,8 @@ public class Modelo {
 		comps = new SeparateChaining<>(3011);
 		comps2 = new LinearProbing<>(20011);
 		comps3 = new MaxHeapCP<>(300000);
+		comps4 = new RedBlackBST<>();
+		comparendos = new Queue<>();
 		numeroMInicialSP = comps.TamañoDeLaHastTable();
 		numeroMInicialLP = comps2.darTamanoHashTable();
 		objetoJsonGson = new GeoJSONProcessing();
@@ -247,7 +257,7 @@ public class Modelo {
 
 	public void cargar(String direccion){
 
-		objetoJsonGson.cargarDatos(comps, comps2, comps3, direccion);
+		objetoJsonGson.cargarDatos(comparendos, direccion);
 
 	}
 
@@ -332,150 +342,163 @@ public class Modelo {
 
 	}
 
-	public void requerimiento3(){
+	// M comparendos con mayor gravedad (Codigo de infraccion)
+	public void requerimiento1A(int M){
 
-		Iterator<String> iter = comps.keys();
+		ComparadorXGravedad comparar = new ComparadorXGravedad();
+
+		Iterator<Comparendo> iter = comparendos.iterator();
+
+		while(iter.hasNext()){
+
+			Comparendo actual = iter.next();
+			comps3.insert(actual, comparar);
+		}
+
+		Iterator<Comparendo> iter2 = comps3.iterator(comparar);
+
 		int conteo = 0;
+		System.out.println("Los primeros " + M + " comparendos con mayor gravedad son: ");
 
-		double tiempoMinimoGetSC = 50.0;
-		double tiempoPromedioGetSC = 0.0;
-		double tiempoMaximoGetSC = -50.0;
+		while(iter2.hasNext() && conteo <M ){
 
-		// 8000 llaves conocidas
-		while(iter.hasNext() && conteo<8000 ){
-
-			String keyAct = iter.next();
-
-			long start = System.currentTimeMillis();
-
-			// consulto la llave
-			comps.getSet(keyAct);
-
-			long end = System.currentTimeMillis();
-
-			double tiempo = (end-start)/1000.0;
-
-			if(tiempo>tiempoMaximoGetSC){
-				tiempoMaximoGetSC = tiempo;
-			}
-
-			if(tiempo<tiempoMinimoGetSC){
-				tiempoMinimoGetSC = tiempo;
-			}
-
-			tiempoPromedioGetSC = tiempoPromedioGetSC + tiempo;
-
+			Comparendo actual = iter2.next();
+			System.out.println("-" + actual.retornarDatosRequerimiento1A());
 			conteo++;
 		}
 
-		int conteo2 = 0;
+		// al final deja vaica la cola para ultilizarla en otro requerimiento
+		comps3 = new MaxHeapCP<>(300000);
 
-		String prueba = "2017";
+	}
+	// El usuario ingresa el número del mes (1-12) y el día de la semana (L, M, I, J, V, S, D).
+	public void requerimiento2A(int mes, String dia){
 
-		// 2000 llaves desconocidas
-		while(conteo2<2000 ){
+		int diaNumero;
 
-			String keyAct1 = prueba + conteo;
+		if(dia.equals("L")) diaNumero = 2;
+		else if(dia.equals("M")) diaNumero = 3;
+		else if(dia.equals("I")) diaNumero = 4;
+		else if(dia.equals("J")) diaNumero = 5;
+		else if(dia.equals("V")) diaNumero = 6;
+		else if(dia.equals("S")) diaNumero = 7;
+		else if(dia.equals("D")) diaNumero = 1;
+		else{ System.out.println("Día invalido"); return; }
 
-			long start = System.currentTimeMillis();
+		Iterator<Comparendo> iter = comparendos.iterator();
 
-			// consulto la llave
-			comps.getSet(keyAct1);
+		Calendar fecha = Calendar.getInstance();
 
-			long end = System.currentTimeMillis();
+		while(iter.hasNext()){
 
-			double tiempo = (end-start)/1000.0;
+			Comparendo actual = iter.next();
+			fecha.setTime(actual.FECHA_HORA);
+			int mesKey = fecha.get(Calendar.MONTH) + 1;
+			int diaKey = fecha.get(Calendar.DAY_OF_WEEK);
+			String KeyMes = Integer.toString(mesKey);
+			String KeyDia = Integer.toString(diaKey);
 
-			if(tiempo>tiempoMaximoGetSC){
-				tiempoMaximoGetSC = tiempo;
-			}
+			comps2.put(KeyMes+KeyDia, actual);
 
-			if(tiempo<tiempoMinimoGetSC){
-				tiempoMaximoGetSC = tiempo;
-			}
-
-			tiempoPromedioGetSC = tiempoPromedioGetSC + tiempo;
-
-			conteo2++;
 		}
 
-		tiempoPromedioGetSC = tiempoPromedioGetSC/10000;
+		String mesBuscar = Integer.toString(mes);
+		String diaBuscar = Integer.toString(diaNumero);
 
-		System.out.println("El tiempo minimo del metodo getSet() en Separate Chaining fue: " + tiempoMinimoGetSC + " segundos");
-		System.out.println("El tiempo máximo del metodo getSet() en Separate Chaining fue: " + tiempoMaximoGetSC + " segundos");
-		System.out.println("El tiempo promedio del metodo getSet() en Separate Chaining fue: " + tiempoPromedioGetSC + " segundos");
+		Iterator<Comparendo> iter2 = comps2.getSet(mesBuscar+diaBuscar);
+		int numeroComparendos;
+		try{
 
-		Iterator<String> iter2 = comps2.keys();
-		conteo = 0;
+			numeroComparendos = comps2.get(mesBuscar+diaBuscar).size();
+			System.out.println("Fueron encontrados " + numeroComparendos +" comparendos que cumplian con el criterio de busqueda.");
+			if(numeroComparendos<=maximoNumeroDatosImpreso) System.out.println("Se muestran los primeros " + numeroComparendos + ":");
+			else System.out.println("Se muestran los primeros " + maximoNumeroDatosImpreso + ":");
 
-		double tiempoMinimoGetLP = 50.0;
-		double tiempoPromedioGetLP = 0.0;
-		double tiempoMaximoGetLP = -50.0;
+			int conteo = 0;
+			while(iter2.hasNext() && conteo< maximoNumeroDatosImpreso ){
 
-		// 8000 llaves conocidas
-		while(iter.hasNext() && conteo<8000 ){
-
-			String keyAct = iter.next();
-
-			long start = System.currentTimeMillis();
-
-			// consulto la llave
-			comps2.getSet(keyAct);
-
-			long end = System.currentTimeMillis();
-
-			double tiempo = (end-start)/1000.0;
-
-			if(tiempo>tiempoMaximoGetLP){
-				tiempoMaximoGetLP = tiempo;
+				Comparendo actual = iter2.next();
+				System.out.println("-" + actual.retornarDatosRequerimiento1A());
+				conteo ++;
 			}
 
-			if(tiempo<tiempoMinimoGetLP){
-				tiempoMinimoGetLP = tiempo;
-			}
-
-			tiempoPromedioGetLP = tiempoPromedioGetLP + tiempo;
-
-			conteo++;
 		}
+		catch(Exception e){
 
-		conteo2 = 0;
-
-		prueba = "2017";
-
-		// 2000 llaves desconocidas
-		while(conteo2<2000 ){
-
-			String keyAct1 = prueba + conteo;
-
-			long start = System.currentTimeMillis();
-
-			// consulto la llave
-			comps2.getSet(keyAct1);
-
-			long end = System.currentTimeMillis();
-
-			double tiempo = (end-start)/1000.0;
-
-			if(tiempo>tiempoMaximoGetLP){
-				tiempoMaximoGetLP = tiempo;
-			}
-
-			if(tiempo<tiempoMinimoGetLP){
-				tiempoMaximoGetLP = tiempo;
-			}
-
-			tiempoPromedioGetLP = tiempoPromedioGetLP + tiempo;
-
-			conteo2++;
+			System.out.println("No se encontró nungun comparendo con los criterios de busqueda");	
 		}
+		System.out.println();
+		// vacio el linear probing para usarlo en otro requerimiento
+		comps2 = new LinearProbing<>(20011);
+	}
 
-		tiempoPromedioGetLP = tiempoPromedioGetLP/10000;
+	//3A- Buscar los comparendos que tienen una fecha-hora en un rango y que son de una localidad dada formato:(YYYY/MM/DD-HH:MM:ss)
+	public void requerimiento3A(String f1, String f2){
 
-		System.out.println("----------------");
-		System.out.println("El tiempo minimo del metodo getSet() en Linear Probing fue: " + tiempoMinimoGetLP + " segundos");
-		System.out.println("El tiempo máximo del metodo getSet() en Linear Probing fue: " + tiempoMaximoGetLP + " segundos");
-		System.out.println("El tiempo promedio del metodo getSet() en Linear Probing fue: " + tiempoPromedioGetLP + " segundos");
+		SimpleDateFormat parser=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); //año-mes-dia hora:minuto:segundo
+
+		f1 = f1.trim().replaceAll("-", " ");
+		f1 = f1.trim().replaceAll("/", "-");
+
+		f2 = f2.trim().replaceAll("-", " ");
+		f2 = f2.trim().replaceAll("/", "-");
+
+		try{
+			Date fecha1 = parser.parse(f1);
+			Date fecha2 = parser.parse(f2);
+
+			Iterator<Comparendo> iter = comparendos.iterator();
+
+			while(iter.hasNext()){
+
+				Comparendo actual = iter.next();
+				comps4.put(actual.FECHA_HORA, actual);
+
+			}
+
+			try{
+
+				Iterator<Comparendo> iter2 = comps4.valuesInRange(fecha1, fecha2);
+				ArrayList<Comparendo> paraMostar = new ArrayList<Comparendo>();
+
+				while(iter2.hasNext()){
+
+					Comparendo actual = iter2.next();
+					paraMostar.add(actual);
+
+				}
+
+				if(paraMostar.size() ==0) System.out.println("No se encontraron comparendos en el rango de fechas dado");
+				else if(paraMostar.size()<=maximoNumeroDatosImpreso){
+					System.out.println("Fueron encontrados " + paraMostar.size() +" comparendos que cumplian con el criterio de busqueda.");
+					System.out.println("Se muestran los primeros " + paraMostar.size() + ":");
+
+				}
+				else{
+					System.out.println("Fueron encontrados " + paraMostar.size() +" comparendos que cumplian con el criterio de busqueda.");
+					System.out.println("Se muestran los primeros " + maximoNumeroDatosImpreso + ":");
+				}
+
+				Iterator<Comparendo> iter3 =  paraMostar.iterator();
+
+				int conteo = 0;
+				while(iter3.hasNext() && conteo <=maximoNumeroDatosImpreso){
+
+					Comparendo actual = iter3.next();
+					System.out.println("-" + actual.retornarDatosRequerimiento1A());
+					conteo++;
+
+				}
+			}
+
+			catch(Exception e){ System.out.println("No se encontraron comparendos en el rango de fechas dado"); }
+
+		}
+		catch (Exception e){ System.out.println("El formato de fecha ingresado es inválido"); }
+
+		// vacio el arbol rojo-negro para ultilizaro en otros requerimientos
+		System.out.println();
+		comps4 = new RedBlackBST<>();
 
 	}
 

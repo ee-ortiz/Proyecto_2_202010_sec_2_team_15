@@ -24,6 +24,7 @@ import model.data_structures.IPila;
 import model.data_structures.LinearProbing;
 import model.data_structures.MaxHeapCP;
 import model.data_structures.Pila;
+import model.data_structures.Queue;
 import model.data_structures.SeparateChaining;
 
 
@@ -35,7 +36,7 @@ public class GeoJSONProcessing {
 	private int totalComps;
 
 	// Solucion de carga de datos publicada al curso Estructuras de Datos 2020-10
-	public void cargarDatos(SeparateChaining<String, Comparendo> hashTable1, LinearProbing<String, Comparendo> hashTable2, MaxHeapCP<Comparendo> colaPrioridad, String direccion){
+	public void cargarDatos(Queue<Comparendo> pComps, String direccion){
 
 		JsonReader reader;
 		try {
@@ -83,30 +84,9 @@ public class GeoJSONProcessing {
 						.get(1).getAsDouble();
 
 
-				Calendar fecha = Calendar.getInstance();
-				fecha.setTime(c.FECHA_HORA);
-				int ano = fecha.get(Calendar.YEAR);
-				int mes = fecha.get(Calendar.MONTH) + 1;
-				int dia = fecha.get(Calendar.DAY_OF_MONTH);
-
-				String mes1 = convertirIntAString(mes);
-				String dia1 = convertirIntAString(dia);
-
-				if(mes1.length() ==1){
-					mes1 = "0" + mes1;
-				}
-
-				if(dia1.length() ==1){
-					dia1 = "0" + dia1;
-				}
-
-
-				//(FECHA (año/mes/día),CLASE_VEHICULO, INFRACCION
-				String key = convertirIntAString(ano) + mes1 + dia1 +  c.CLASE_VEHI.trim() + c.INFRACCION.trim();
-
-				hashTable1.putInSet(key, c);
-				hashTable2.put(key, c);
-				colaPrioridad.insert(c);
+				// se guardan comparendos en una cola que se usara como contenedor para agregar
+				// a las demas estructuras de datos los comparendos segun lo dicte el requerimiento funcional
+				pComps.enqueue(c);
 
 				if(c.OBJECTID>objectIDMayor){
 					objectIDMayor = c.OBJECTID;

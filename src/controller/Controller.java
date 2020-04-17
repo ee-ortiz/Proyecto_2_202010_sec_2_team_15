@@ -66,7 +66,7 @@ public class Controller {
 					modelo = new Modelo();
 
 					long start = System.currentTimeMillis();
-					modelo.cargar(PATH2);	
+					modelo.cargar(PATH);	
 					long end = System.currentTimeMillis();
 					view.printMessage("Tiempo de carga (s): " + (end-start)/1000.0);
 
@@ -91,7 +91,39 @@ public class Controller {
 
 				view.printMessage("");
 
-				break;			
+				break;
+
+			case 2:
+
+				view.printMessage("Ingresa un numero M de comparendos");
+
+				int M;
+				M = lector.nextInt();
+
+				modelo.requerimiento1A(M);
+
+				break;
+
+			case 3:
+
+				view.printMessage("Ingresa un numero número para el mes (1-12)");
+				int mes = lector.nextInt();
+				view.printMessage("Ingresa un dia de la semana (L, M, I, J, V, S, D)");
+				String dia = lector.next().trim();
+
+				modelo.requerimiento2A(mes, dia);
+
+				break;
+
+			case 4:
+
+				view.printMessage("Por favor ingrese una fecha inicial con el siguiente formato (YYYY/MM/DD-HH:MM:ss)");
+				String fecha1 = lector.next();
+				view.printMessage("Por favor ingrese una fecha final con el siguiente formato (YYYY/MM/DD-HH:MM:ss)");
+				String fecha2 = lector.next();
+
+				modelo.requerimiento3A(fecha1,fecha2);
+				break;
 
 			default: 
 

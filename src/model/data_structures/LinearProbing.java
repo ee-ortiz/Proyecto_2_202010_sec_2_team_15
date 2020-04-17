@@ -113,7 +113,7 @@ public class LinearProbing<Key, Value> {
 		vals[i].add(val);
 		n++;
 
-		if ((double)n/(double)m > factorDeCargaMaximo ) resize(siguientePrimo(m));
+		if ((double)n/(double)m > factorDeCargaMaximo ) resize(siguientePrimo(2*m));
 	}
 
 	/**
@@ -167,7 +167,7 @@ public class LinearProbing<Key, Value> {
 		// delete key and associated value
 		keys[i] = null;
 		vals[i] = new ArrayList<Value>();
-		
+
 
 		// rehash all keys in same cluster
 		i = (i + 1) % m;
