@@ -320,5 +320,19 @@ public class LinearProbing<Key, Value> {
 
 		return m;
 	}
+	
+	public int  totalElementos(){
+		
+		int rta = 0;
+		Iterator<Key> iter = keys();
+		
+		while(iter.hasNext()){
+			
+			Key actual = iter.next();
+			rta += get(actual).size();
+		}
+		
+		return rta;
+	}
 }
 

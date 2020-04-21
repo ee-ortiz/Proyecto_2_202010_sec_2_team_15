@@ -1,5 +1,6 @@
 package model.data_structures;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -13,7 +14,7 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
 	// BST helper node data type
 	private class Node {
 		private Key key;           // key
-		private Value val;         // associated data
+		private ArrayList<Value> val;         // associated data
 		private Node left, right;  // links to left and right subtrees
 		private boolean color;     // color of parent link
 		private int size;          // subtree count
@@ -21,7 +22,8 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
 
 		public Node(Key key, Value val, boolean color, int size) {
 			this.key = key;
-			this.val = val;
+			this.val = new ArrayList<Value>();
+			this.val.add(val);
 			this.color = color;
 			this.size = size;
 
@@ -84,13 +86,13 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
 	 *     and {@code null} if the key is not in the symbol table
 	 * @throws IllegalArgumentException if {@code key} is {@code null}
 	 */
-	public Value get(Key key) {
+	public ArrayList<Value> get(Key key) {
 		if (key == null) throw new IllegalArgumentException("argument to get() is null");
 		return get(root, key);
 	}
 
 	// value associated with the given key in subtree rooted at x; null if no such key
-	private Value get(Node x, Key key) {
+	private ArrayList<Value>  get(Node x, Key key) {
 		while (x != null) {
 			int cmp = key.compareTo(x.key);
 			if      (cmp < 0) x = x.left;
@@ -145,7 +147,7 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
 		int cmp = key.compareTo(h.key);
 		if      (cmp < 0) h.left  = put(h.left,  key, val); 
 		else if (cmp > 0) h.right = put(h.right, key, val); 
-		else              h.val   = val;
+		else              h.val.add(val);
 
 		// fix-up any right-leaning links
 		if (isRed(h.right) && !isRed(h.left))      h = rotateLeft(h);
@@ -628,7 +630,7 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
 	}
 
 
-	public Iterator<Value> valuesInRange(Key lo, Key hi) {
+	public Iterator<ArrayList<Value>> valuesInRange(Key lo, Key hi) {
 
 		return values(lo, hi).iterator();
 	}
@@ -644,11 +646,11 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
 	 * @throws IllegalArgumentException if either {@code lo} or {@code hi}
 	 *    is {@code null}
 	 */
-	public Iterable<Value> values(Key lo, Key hi) {
+	public Iterable<ArrayList<Value>> values(Key lo, Key hi) {
 		if (lo == null) throw new IllegalArgumentException("first argument to keys() is null");
 		if (hi == null) throw new IllegalArgumentException("second argument to keys() is null");
 
-		Queue<Value> queue = new Queue<Value>();
+		Queue<ArrayList<Value>> queue = new Queue<ArrayList<Value>>();
 		// if (isEmpty() || lo.compareTo(hi) > 0) return queue;
 		values(root, queue, lo, hi);
 		return queue;
@@ -656,7 +658,7 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
 
 	// add the keys between lo and hi in the subtree rooted at x
 	// to the queue 
-	private void values(Node x, Queue<Value> queue, Key lo, Key hi) { 
+	private void values(Node x, Queue<ArrayList<Value>> queue, Key lo, Key hi) { 
 		if (x == null) return; 
 		int cmplo = lo.compareTo(x.key); 
 		int cmphi = hi.compareTo(x.key); 

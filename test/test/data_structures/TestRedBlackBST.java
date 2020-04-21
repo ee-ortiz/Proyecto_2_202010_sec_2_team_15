@@ -2,6 +2,7 @@ package test.data_structures;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.junit.Before;
@@ -84,7 +85,7 @@ public class TestRedBlackBST {
 		setUp2();
 
 		Numero aIgualar = new Numero("Uno", 1);
-		assertEquals( aIgualar.darNombre(), redBlackBST.get(1).darNombre());
+		assertEquals( aIgualar.darNombre(), redBlackBST.get(1).get(0).darNombre());
 		assertEquals( 11, redBlackBST.size());
 		assertEquals( 3, redBlackBST.height());
 		assertEquals(true, redBlackBST.contains(1));
@@ -111,14 +112,21 @@ public class TestRedBlackBST {
 			conteo++;
 		}
 
-		Iterator<Numero> iter2 = redBlackBST.valuesInRange(4, 6);
+		Iterator<ArrayList<Numero>> iter2 = redBlackBST.valuesInRange(4, 6);
 
 		conteo = 4;
 		while(iter2.hasNext()){
 
-			Numero actual = iter2.next();
-			assertEquals(conteo, actual.darNumero());
-			conteo++;
+			ArrayList<Numero> actual = iter2.next();
+
+			Iterator<Numero> nums = actual.iterator();
+
+			while(nums.hasNext()){
+
+				Numero act = nums.next();
+				assertEquals(conteo, act.darNumero());
+				conteo++;
+			}
 		}
 
 		Iterator<Integer> iter3 = redBlackBST.keysInRange(4, 6);

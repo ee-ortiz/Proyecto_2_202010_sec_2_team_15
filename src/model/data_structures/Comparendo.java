@@ -69,4 +69,16 @@ public class Comparendo implements Comparable<Comparendo> {
 
 	}
 
+	public static class ComparadorXFecha implements Comparator<Comparendo>{
+
+		public int compare(Comparendo c1, Comparendo c2){
+
+			return (c1.FECHA_HORA.compareTo(c2.FECHA_HORA))*(-1); // en este caso se multiplica por -1
+																// para que si la fecha de c1 es mayor que la de c2
+																// entonces se retorne numero negativo
+																// eso asegura que cuando se agregen a la cola de  
+																// prioridad la cola quede  en orden ascendente
+		}
+	}
+
 }

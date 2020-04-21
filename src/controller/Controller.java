@@ -66,7 +66,7 @@ public class Controller {
 					modelo = new Modelo();
 
 					long start = System.currentTimeMillis();
-					modelo.cargar(PATH);	
+					modelo.cargar(PATH3);	
 					long end = System.currentTimeMillis();
 					view.printMessage("Tiempo de carga (s): " + (end-start)/1000.0);
 
@@ -121,8 +121,38 @@ public class Controller {
 				String fecha1 = lector.next();
 				view.printMessage("Por favor ingrese una fecha final con el siguiente formato (YYYY/MM/DD-HH:MM:ss)");
 				String fecha2 = lector.next();
+				view.printMessage("Por favor ingrese una localidad con el siguiente formato (MARTIRES)");
+				String pLocalidad = lector.next();
 
-				modelo.requerimiento3A(fecha1,fecha2);
+				modelo.requerimiento3A(fecha1,fecha2, pLocalidad);
+				break;
+
+			case 5:
+
+				break;
+
+			case 6:
+
+				break;
+
+			case 7:
+
+				break;
+
+			case 8:
+
+				view.printMessage("Por favor ingrese un numero para el rango de fechas");
+				int rango = lector.nextInt();
+				modelo.requerimiento1C(rango);
+
+				break;
+
+			case 9:
+
+				break;
+
+			case 10:
+
 				break;
 
 			default: 

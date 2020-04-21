@@ -2,6 +2,7 @@ package model.logic;
 
 import model.data_structures.ArregloDinamico;
 import model.data_structures.Comparendo;
+import model.data_structures.Comparendo.ComparadorXFecha;
 import model.data_structures.Comparendo.ComparadorXGravedad;
 import model.data_structures.IArregloDinamico;
 import model.data_structures.LinearProbing;
@@ -12,6 +13,7 @@ import model.data_structures.RedBlackBST;
 import model.data_structures.SeparateChaining;
 
 import java.text.SimpleDateFormat;
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Comparator;
@@ -30,11 +32,13 @@ public class Modelo {
 	private LinearProbing<String, Comparendo> comps2;
 	private MaxHeapCP<Comparendo> comps3;
 	private RedBlackBST<Date, Comparendo> comps4;
+	private RedBlackBST<Calendar, Comparendo> comps5;
 	private Queue<Comparendo> comparendos;
 	private GeoJSONProcessing objetoJsonGson;
 	private int numeroMInicialSP;
 	private int numeroMInicialLP;
 	public final static int maximoNumeroDatosImpreso = 20;
+	public final static int valorAsterisco = 500;
 
 
 	/**
@@ -46,6 +50,7 @@ public class Modelo {
 		comps2 = new LinearProbing<>(20011);
 		comps3 = new MaxHeapCP<>(300000);
 		comps4 = new RedBlackBST<>();
+		comps5 = new RedBlackBST<>();
 		comparendos = new Queue<>();
 		numeroMInicialSP = comps.TamañoDeLaHastTable();
 		numeroMInicialLP = comps2.darTamanoHashTable();
@@ -433,7 +438,7 @@ public class Modelo {
 	}
 
 	//3A- Buscar los comparendos que tienen una fecha-hora en un rango y que son de una localidad dada formato:(YYYY/MM/DD-HH:MM:ss)
-	public void requerimiento3A(String f1, String f2){
+	public void requerimiento3A(String f1, String f2, String pLocalidad){
 
 		SimpleDateFormat parser=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); //año-mes-dia hora:minuto:segundo
 
@@ -458,13 +463,22 @@ public class Modelo {
 
 			try{
 
-				Iterator<Comparendo> iter2 = comps4.valuesInRange(fecha1, fecha2);
+				Iterator<ArrayList<Comparendo>> iter2 = comps4.valuesInRange(fecha1, fecha2);
 				ArrayList<Comparendo> paraMostar = new ArrayList<Comparendo>();
 
 				while(iter2.hasNext()){
 
-					Comparendo actual = iter2.next();
-					paraMostar.add(actual);
+					ArrayList<Comparendo> actual = iter2.next();
+
+					Iterator<Comparendo> compsIter = actual.iterator();
+
+					while(compsIter.hasNext()){
+
+						Comparendo CompAct = compsIter.next();
+						if(CompAct.LOCALIDAD.equalsIgnoreCase(pLocalidad)) paraMostar.add(CompAct);
+					}
+
+
 
 				}
 
@@ -501,5 +515,143 @@ public class Modelo {
 		comps4 = new RedBlackBST<>();
 
 	}
+
+	public void requerimiento1C(int pRango){
+
+		SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd");
+
+		Iterator<Comparendo> iter = comparendos.iterator();
+
+		while(iter.hasNext()){
+
+			Comparendo actual = iter.next();
+			comps4.put(actual.FECHA_HORA, actual); // la llave de los comparendos sera su fecha YYYY MM DD
+
+		}
+
+		try{Date fechaInicial = parser.parse("2018-01-01");	
+
+		Calendar fecha = Calendar.getInstance();
+		fecha.setTime(fechaInicial);
+
+		System.out.println("Rango de fechas         |  " + "Comparendos durante el año");
+		System.out.println("-------------------------------------------------------");
+
+		while(fecha.get(Calendar.YEAR)==2018){
+			int anoLimiteInferior = fecha.get(Calendar.YEAR);
+			String mesLimiteInferior = String.format("%02d", fecha.get(Calendar.MONTH)+1);
+			String diaMesLimiteInferior = String.format("%02d", fecha.get(Calendar.DAY_OF_MONTH));
+			String fechaInferior = anoLimiteInferior + "-" + mesLimiteInferior + "-" + diaMesLimiteInferior;
+
+			fecha.add(Calendar.DATE, pRango-1);
+
+			Calendar limiteSup = Calendar.getInstance();
+			limiteSup = fecha;
+
+			int anoLimiteSuperior = fecha.get(Calendar.YEAR);
+			String mesLimiteSuperior = String.format("%02d", fecha.get(Calendar.MONTH)+1);
+			String diaMesLimiteSuperior = String.format("%02d", fecha.get(Calendar.DAY_OF_MONTH));
+
+			Date fechaInf = parser.parse(fechaInferior);
+
+			limiteSup.add(Calendar.DATE, 1);
+
+			int anoLimiteSuperior1 = fecha.get(Calendar.YEAR);
+			String mesLimiteSuperior1 = String.format("%02d", fecha.get(Calendar.MONTH)+1);
+			String diaMesLimiteSuperior1 = String.format("%02d", fecha.get(Calendar.DAY_OF_MONTH));
+			String fechaSuperior = anoLimiteSuperior1 + "-" + mesLimiteSuperior1 + "-" + diaMesLimiteSuperior1;
+
+			Date fechaSup = parser.parse(fechaSuperior);
+
+			Iterator<ArrayList<Comparendo>> valoresEnRango = comps4.valuesInRange(fechaInf, fechaSup);
+
+			int conteo = 0;
+			boolean continuar = true;
+			while(valoresEnRango.hasNext()){
+
+				ArrayList<Comparendo> actual = valoresEnRango.next();
+
+				Iterator<Comparendo> actuales = actual.iterator();
+
+				while(actuales.hasNext()){
+
+					Comparendo act = actuales.next();
+					conteo++;
+
+					if(act.FECHA_HORA.before(limiteSup.getTime())){
+
+					}
+					else{
+
+						continuar = false;
+						break;
+					}
+
+				}
+
+				if(continuar == false){
+					break;
+				}
+			}
+
+			String asteriscos = imprimirNAstericos(conteo/valorAsterisco);
+
+
+			System.out.println(anoLimiteInferior + "/" + mesLimiteInferior + "/" + diaMesLimiteInferior + "-"
+					+ anoLimiteSuperior + "/" + mesLimiteSuperior + "/" + diaMesLimiteSuperior + "   |  " + asteriscos);
+		}
+
+		System.out.println("Cada * representa " + valorAsterisco +  " Comparendos");
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+
+		System.out.println();
+		comps4 = new RedBlackBST<>();
+
+	}
+	
+	// - El costo de los tiempos de espera hoy en día (cola)
+	public void requerimiento2C(){
+		
+		Iterator<Comparendo> iter = comparendos.iterator();
+		
+		while(iter.hasNext()){
+			
+			Comparendo actual = iter.next();
+			
+		}
+		
+		
+	}
+
+	public String imprimirNAstericos(int n){
+
+		String rta = "";
+
+		for(int i = 0; i<n; i++){
+
+			rta += "*";
+		}
+
+		return rta;
+	}
+
+	public String convertirALlaveUnaFecha(Calendar fecha){
+
+
+		int anoAct = fecha.get(Calendar.YEAR);
+		int mesAct = fecha.get(Calendar.MONTH) + 1;
+		int diaMes = fecha.get(Calendar.DAY_OF_MONTH);
+		String mes = String.format("%02d", mesAct);
+		String dia = String.format("%02d",diaMes);
+		String key = anoAct + mes + dia;
+
+		return key;
+
+	}
+
+
 
 }
