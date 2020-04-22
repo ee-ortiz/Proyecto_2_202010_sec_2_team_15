@@ -1,7 +1,10 @@
 package model.data_structures;
 
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
+
+import sun.security.provider.certpath.DistributionPointFetcher;
 
 public class Comparendo implements Comparable<Comparendo> {
 
@@ -69,16 +72,85 @@ public class Comparendo implements Comparable<Comparendo> {
 
 	}
 
+	public int darNumeroDia(){
+
+		Calendar fecha = Calendar.getInstance();
+		fecha.setTime(FECHA_HORA);
+		int dia = fecha.get(Calendar.DAY_OF_YEAR);
+		return dia;
+	}
+
 	public static class ComparadorXFecha implements Comparator<Comparendo>{
 
 		public int compare(Comparendo c1, Comparendo c2){
 
 			return (c1.FECHA_HORA.compareTo(c2.FECHA_HORA))*(-1); // en este caso se multiplica por -1
-																// para que si la fecha de c1 es mayor que la de c2
-																// entonces se retorne numero negativo
-																// eso asegura que cuando se agregen a la cola de  
-																// prioridad la cola quede  en orden ascendente
+			// para que si la fecha de c1 es mayor que la de c2
+			// entonces se retorne numero negativo
+			// eso asegura que cuando se agregen a la cola de  
+			// prioridad la cola quede  en orden ascendente
 		}
+	}
+
+	public int darPrecioInfraccion(){
+
+		int precio;
+		if(DES_INFRAC.contains("INMOVILIZADO")) precio = 400;
+		else if(DES_INFRAC.contains("LICENCIA DE CONDUCC")) precio = 40;
+		else precio =  4;
+
+		return precio;
+	}
+
+
+	public static class ComparadorRequerimiento3C implements Comparator<Comparendo>{
+
+		public int compare(Comparendo c1, Comparendo c2){
+
+			Calendar fecha1 = Calendar.getInstance();
+			Calendar fecha2 = Calendar.getInstance();
+
+			fecha1.setTime(c1.FECHA_HORA);
+			fecha2.setTime(c2.FECHA_HORA);
+
+			int dia1 = fecha1.get(Calendar.DAY_OF_YEAR);
+			int dia2 = fecha2.get(Calendar.DAY_OF_YEAR);
+
+			Integer Dia1 = (Integer) dia1;
+			Integer Dia2 = (Integer) dia2;
+
+			int diferencia = Dia1.compareTo(Dia2);
+
+			if(diferencia != 0){
+
+				return diferencia*(-1); // se multiplica por -1 para tener el MaxHeap ordenado de menor a mayor
+			}
+
+			else{
+
+				String descripcion1 = c1.DES_INFRAC;
+				String descripcion2 = c2.DES_INFRAC;
+
+				int prioridad1;
+				int prioridad2;
+
+				if(descripcion1.contains("INMOVILIZADO")) prioridad1 = 3;
+				else if(descripcion1.contains("LICENCIA DE CONDUCC")) prioridad1 = 2;
+				else prioridad1 = 1;
+
+				if(descripcion2.contains("INMOVILIZADO")) prioridad2 = 3;
+				else if(descripcion2.contains("LICENCIA DE CONDUCC")) prioridad2 = 2;
+				else prioridad2 = 1;
+
+				Integer Prioridad1 = (Integer) prioridad1;
+				Integer Prioridad2 = (Integer) prioridad2;
+
+				return Prioridad1.compareTo(Prioridad2);
+
+			}
+		}
+
+
 	}
 
 }

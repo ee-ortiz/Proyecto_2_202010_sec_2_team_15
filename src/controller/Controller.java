@@ -153,6 +153,7 @@ public class Controller {
 
 			case 10:
 
+				modelo.requerimiento3C();
 				break;
 
 			default: 

@@ -2,17 +2,20 @@ package model.logic;
 
 import model.data_structures.ArregloDinamico;
 import model.data_structures.Comparendo;
+import model.data_structures.Comparendo.ComparadorRequerimiento3C;
 import model.data_structures.Comparendo.ComparadorXFecha;
 import model.data_structures.Comparendo.ComparadorXGravedad;
 import model.data_structures.IArregloDinamico;
 import model.data_structures.LinearProbing;
 import model.data_structures.MaxColaCP;
 import model.data_structures.MaxHeapCP;
+import model.data_structures.Penalizaciones;
 import model.data_structures.Queue;
 import model.data_structures.RedBlackBST;
 import model.data_structures.SeparateChaining;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.Year;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -39,6 +42,7 @@ public class Modelo {
 	private int numeroMInicialLP;
 	public final static int maximoNumeroDatosImpreso = 20;
 	public final static int valorAsterisco = 500;
+	public final static int valorAsterisco2 = 300;
 
 
 	/**
@@ -611,19 +615,111 @@ public class Modelo {
 		comps4 = new RedBlackBST<>();
 
 	}
-	
+
 	// - El costo de los tiempos de espera hoy en día (cola)
 	public void requerimiento2C(){
-		
+
+
+
+	}
+
+	public void requerimiento3C(){
+
+		Penalizaciones pen = new Penalizaciones();
 		Iterator<Comparendo> iter = comparendos.iterator();
-		
+		ComparadorRequerimiento3C comparador = new ComparadorRequerimiento3C();
+
 		while(iter.hasNext()){
-			
+
 			Comparendo actual = iter.next();
-			
+			comps3.insert(actual, comparador);
 		}
+
+		System.out.println("Fecha       | Comparendos procesados                 ***");
+		System.out.println("            | Comparendos que están en espera        ###");
+		System.out.println("-----------------------------------------------------------");
+
+		int numeroDia = 1;
+		while(!comps3.isEmpty()){
+
+			int conteo = 0;
+			while(conteo<1500 && !comps3.isEmpty()){
+
+				Comparendo actual = comps3.max();
+				if(actual.darNumeroDia() > numeroDia){
+					System.out.println(convertirDiaAFecha(numeroDia) + "  |  " + imprimirNAstericos(conteo/valorAsterisco2));
+					System.out.println("            |  " + imprimirNNumerales(numeroEnEspera(numeroDia)/valorAsterisco2));			
+					numeroDia ++;
+					break;
+				}
+				else{ 
+
+					String descripcion = actual.DES_INFRAC;
+					int diferenciaDia = numeroDia - actual.darNumeroDia();
+
+					comps3.delMax(comparador);
+					pen.agregar(descripcion, diferenciaDia);
+					conteo++;
+
+					if(conteo == 1500){
+						System.out.println(convertirDiaAFecha(numeroDia) + "  |  " + imprimirNAstericos(conteo/valorAsterisco2));
+						System.out.println("            |  " + imprimirNNumerales(numeroEnEspera(numeroDia)/valorAsterisco2));
+						numeroDia++;
+					}
+				}
+
+				if(comps3.isEmpty()){
+
+					while(numeroDia<=365){
+
+						System.out.println(convertirDiaAFecha(numeroDia) + "  |  " + imprimirNAstericos(conteo/valorAsterisco2));
+						System.out.println("            |  " + imprimirNNumerales(numeroEnEspera(numeroDia)/valorAsterisco2));
+						numeroDia++;
+						conteo = 0;
+
+
+					}
+				}
+			}
+
+		}
+
+		System.out.println("Cada * y # representa " + valorAsterisco2 + " Comparendos");
+		System.out.println();
+		System.out.println("El costo total que generan las penalizaciones en 2018 es: " + pen.costoTotal());
+		double prom400 = pen.darPromedio400(); double prom40 = pen.darPromedio4(); double prom4 = pen.darPromedio4();
+		double promediosSumados = prom400 + prom40 + prom4;
+		System.out.println("El número de días en promedio que debe esperar un comparendo es: " + promediosSumados/3);
+		System.out.println();
+		System.out.println("Costo diario del comparendo | Tiempo mínimo de espera (días) | Tiempo promedio de espera (días) | tiempo máximo espera (días)" );
+		System.out.println("$400                        | " +convertirA32(String.valueOf(pen.min400()))+ "| " + convertirA32(String.valueOf(pen.darPromedio400())) + "  | " + convertirA32(String.valueOf(pen.max400()))); 
+		System.out.println("$40                         | " +convertirA32(String.valueOf(pen.min40()))+ "| " + convertirA32(String.valueOf(pen.darPromedio40())) + "  | " + convertirA32(String.valueOf(pen.max40())));
+		System.out.println("$4                          | " +convertirA32(String.valueOf(pen.min4()))+ "| " + convertirA32(String.valueOf(pen.darPromedio4())) + "  | " + convertirA32(String.valueOf(pen.max4())));
 		
-		
+		System.out.println();
+		comps3 = new MaxHeapCP<>(300000);
+
+	}
+
+	public int numeroEnEspera(int diaFinal){
+
+		ComparadorRequerimiento3C comparador = new ComparadorRequerimiento3C();
+		Iterator<Comparendo> iter = comps3.iterator(comparador);
+
+		int conteo = 0;
+		while(iter.hasNext()){
+
+			Comparendo actual = iter.next();
+			int dia = actual.darNumeroDia();
+			if(dia>diaFinal){
+				break;
+			}
+			else{
+				conteo++;
+			}
+		}
+
+		return conteo;
 	}
 
 	public String imprimirNAstericos(int n){
@@ -633,6 +729,18 @@ public class Modelo {
 		for(int i = 0; i<n; i++){
 
 			rta += "*";
+		}
+
+		return rta;
+	}
+
+	public String imprimirNNumerales(int n){
+
+		String rta = "";
+
+		for(int i = 0; i<n; i++){
+
+			rta += "#";
 		}
 
 		return rta;
@@ -649,6 +757,57 @@ public class Modelo {
 		String key = anoAct + mes + dia;
 
 		return key;
+
+	}
+
+	public void prueba(){
+
+		try{
+			SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd");
+
+			Date fechaInicial = parser.parse("2018-01-01");	
+
+			Calendar fecha = Calendar.getInstance();
+			fecha.setTime(fechaInicial);
+			int numeroDia = fecha.get(Calendar.DAY_OF_YEAR);
+			System.out.println(numeroDia);
+			fecha.add(Calendar.DATE, 1);
+			numeroDia = fecha.get(Calendar.DAY_OF_YEAR);
+			System.out.println(numeroDia);
+
+			fechaInicial = parser.parse("2018-12-31");	
+			fecha.setTime(fechaInicial);
+			numeroDia = fecha.get(Calendar.DAY_OF_YEAR);
+			System.out.println(numeroDia);
+
+		}
+
+		catch(Exception e){
+
+		}
+
+	}
+
+	public String convertirDiaAFecha(int dia){
+
+		Year y = Year.of( 2018 );
+		LocalDate ld = y.atDay(dia) ;
+		String localDate = ld.toString();
+		String rta = localDate.replaceAll("-", "/");
+		return rta;
+	}
+
+	public String convertirA32(String aConvertir){
+
+		int tamano = aConvertir.length();
+
+		for(int i = tamano; i<=30; i++){
+
+			aConvertir+=" ";
+		}
+
+		return aConvertir;
+
 
 	}
 
