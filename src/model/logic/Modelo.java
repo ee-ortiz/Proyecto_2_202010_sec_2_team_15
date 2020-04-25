@@ -2,12 +2,14 @@ package model.logic;
 
 import model.data_structures.ArregloDinamico;
 import model.data_structures.Comparendo;
+import model.data_structures.Comparendo.ComparadorXCercania;
 import model.data_structures.Comparendo.ComparadorXFecha;
 import model.data_structures.Comparendo.ComparadorXGravedad;
 import model.data_structures.IArregloDinamico;
 import model.data_structures.LinearProbing;
 import model.data_structures.MaxColaCP;
 import model.data_structures.MaxHeapCP;
+import model.data_structures.MinPQ;
 import model.data_structures.Queue;
 import model.data_structures.RedBlackBST;
 import model.data_structures.SeparateChaining;
@@ -32,7 +34,9 @@ public class Modelo {
 	private LinearProbing<String, Comparendo> comps2;
 	private MaxHeapCP<Comparendo> comps3;
 	private RedBlackBST<Date, Comparendo> comps4;
+	private RedBlackBST<Double, Comparendo> comps7;
 	private RedBlackBST<Calendar, Comparendo> comps5;
+	private MinPQ<Comparendo> comps6;
 	private Queue<Comparendo> comparendos;
 	private GeoJSONProcessing objetoJsonGson;
 	private int numeroMInicialSP;
@@ -51,6 +55,8 @@ public class Modelo {
 		comps3 = new MaxHeapCP<>(300000);
 		comps4 = new RedBlackBST<>();
 		comps5 = new RedBlackBST<>();
+		comps6= new MinPQ<>(300000);
+		comps7 =new RedBlackBST<>();
 		comparendos = new Queue<>();
 		numeroMInicialSP = comps.TamañoDeLaHastTable();
 		numeroMInicialLP = comps2.darTamanoHashTable();
@@ -651,7 +657,156 @@ public class Modelo {
 		return key;
 
 	}
+	
+	public void requerimiento1B(int m)
+	{
+
+		ComparadorXCercania comparar = new ComparadorXCercania();
+
+		Iterator<Comparendo> iter = comparendos.iterator();
+
+		while(iter.hasNext()){
+
+			Comparendo actual = iter.next();
+			comps6.insert(actual, comparar);
+		}
+
+		Iterator<Comparendo> iter2 = comps6.iterator(comparar);
+
+		int conteo = 0;
+		System.out.println("Los primeros " + m + " comparendos mas cercanos son: ");
+
+		while(iter2.hasNext() && conteo <m ){
+
+			Comparendo actual = iter2.next();
+			System.out.println("-" + actual.retornarDatosRequerimiento1B());
+			conteo++;
+		}
+
+		// al final deja vaica la cola para ultilizarla en otro requerimiento
+		comps6 = new MinPQ<>(300000);
+		
+	}
+	public void requerimiento2b(String pDeteccion, String pVehiculo, String pServicio, 	String pLocalidad)
+	{
+		
+		Iterator<Comparendo> iter = comparendos.iterator();
+
+
+		while(iter.hasNext()){
+
+			Comparendo actual = iter.next();
+			
+			String KeyDeteccion =actual.MEDIO_DETE;
+			String KeyVehiculo= actual.CLASE_VEHI;
+			String keyServicio= actual.TIPO_SERVI;
+			String keyLocalidad=actual.LOCALIDAD;
+
+			comps2.put(KeyDeteccion+KeyVehiculo+keyServicio+keyLocalidad, actual);
+
+		}
+
+		String deteccionBuscar =pDeteccion; 
+		String vehiculoBuscar = pVehiculo;
+		String servicioBuscar=pServicio;
+		String localidadBuscar=pLocalidad;
+
+		Iterator<Comparendo> iter2 = comps2.getSet(deteccionBuscar+vehiculoBuscar+servicioBuscar+localidadBuscar);
+		int numeroComparendos;
+		try{
+
+			numeroComparendos = comps2.get(deteccionBuscar+vehiculoBuscar+servicioBuscar+localidadBuscar).size();
+			System.out.println("Fueron encontrados " + numeroComparendos +" comparendos que cumplian con el criterio de busqueda.");
+			if(numeroComparendos<=maximoNumeroDatosImpreso) System.out.println("Se muestran los primeros " + numeroComparendos + ":");
+			else System.out.println("Se muestran los primeros " + maximoNumeroDatosImpreso + ":");
+
+			int conteo = 0;
+			while(iter2.hasNext() && conteo< maximoNumeroDatosImpreso ){
+
+				Comparendo actual = iter2.next();
+				System.out.println("-" + actual.retornarDatosRequerimiento1A());
+				conteo ++;
+			}
+
+		}
+		catch(Exception e){
+
+			System.out.println("No se encontró nungun comparendo con los criterios de busqueda");	
+		}
+		System.out.println();
+		// vacio el linear probing para usarlo en otro requerimiento
+		comps2 = new LinearProbing<>(20011);
+	}
+
+	public void requerimiento3B(double l1, double l2, String pVehiculo){
+	
+		
+		try{
+			Iterator<Comparendo> iter = comparendos.iterator();
+
+			while(iter.hasNext()){
+
+				Comparendo actual = iter.next();
+				comps7.put(actual.latitud, actual);
+
+			}
+
+			try{
+
+				Iterator<ArrayList<Comparendo>> iter2 = comps7.valuesInRange(l1, l2);
+				ArrayList<Comparendo> paraMostar = new ArrayList<Comparendo>();
+
+				while(iter2.hasNext()){
+
+					ArrayList<Comparendo> actual = iter2.next();
+
+					Iterator<Comparendo> compsIter = actual.iterator();
+
+					while(compsIter.hasNext()){
+
+						Comparendo CompAct = compsIter.next();
+						if(CompAct.CLASE_VEHI.equalsIgnoreCase(pVehiculo)) paraMostar.add(CompAct);
+					}
 
 
 
-}
+				}
+
+				if(paraMostar.size() ==0) System.out.println("No se encontraron comparendos en el rango de fechas dado");
+				else if(paraMostar.size()<=maximoNumeroDatosImpreso){
+					System.out.println("Fueron encontrados " + paraMostar.size() +" comparendos que cumplian con el criterio de busqueda.");
+					System.out.println("Se muestran los primeros " + paraMostar.size() + ":");
+
+				}
+				else{
+					System.out.println("Fueron encontrados " + paraMostar.size() +" comparendos que cumplian con el criterio de busqueda.");
+					System.out.println("Se muestran los primeros " + maximoNumeroDatosImpreso + ":");
+				}
+
+				Iterator<Comparendo> iter3 =  paraMostar.iterator();
+
+				int conteo = 0;
+				while(iter3.hasNext() && conteo <=maximoNumeroDatosImpreso){
+
+					Comparendo actual = iter3.next();
+					System.out.println("-" + actual.retornarDatosRequerimiento1A());
+					conteo++;
+
+				}
+			}
+
+			catch(Exception e){ System.out.println("No se encontraron comparendos en el rango de fechas dado"); }
+
+		}
+		catch (Exception e){ System.out.println("El formato de fecha ingresado es inválido"); }
+
+		// vacio el arbol rojo-negro para ultilizaro en otros requerimientos
+		System.out.println();
+		comps7 = new RedBlackBST<>();
+	}
+	
+	}
+
+
+
+

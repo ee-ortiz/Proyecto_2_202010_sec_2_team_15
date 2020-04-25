@@ -37,6 +37,11 @@ public class Comparendo implements Comparable<Comparendo> {
 		return "OBJECTID: " + OBJECTID + " TIPO_SERVI: " + TIPO_SERVI  + " INFRACCION: " + INFRACCION +" FECHA_HORA: " + FECHA_HORA +
 				" CLASE_VEHI: " + CLASE_VEHI;	
 	}
+	public String retornarDatosRequerimiento1B(){
+
+		return "OBJECTID: " + OBJECTID + " TIPO_SERVI: " + TIPO_SERVI  + " INFRACCION: " + INFRACCION +" FECHA_HORA: " + FECHA_HORA +
+				" LATITUD: " + latitud+ "LONGITUD"+longitud;	
+	}
 
 	// tipo servicio -- infraccion
 	public static class ComparadorXGravedad implements Comparator<Comparendo> {
@@ -68,7 +73,49 @@ public class Comparendo implements Comparable<Comparendo> {
 		}
 
 	}
+	
+	public static class ComparadorXCercania implements Comparator<Comparendo>{
+		
+		double  x1;
+		double y1; 
+		double x2;
+		double y2; 
+		Integer comp1;
+		Integer comp2;
+		private static final int EARTH_RADIUS = 6371; // Approx Earth radius in KM
 
+	    public static double distance(double startLat, double startLong,
+	                                  double endLat, double endLong) {
+
+	        double dLat  = Math.toRadians((endLat - startLat));
+	        double dLong = Math.toRadians((endLong - startLong));
+
+	        startLat = Math.toRadians(startLat);
+	        endLat   = Math.toRadians(endLat);
+
+	        double a = haversin(dLat) + Math.cos(startLat) * Math.cos(endLat) * haversin(dLong);
+	        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+	        return EARTH_RADIUS * c; // <-- d
+	    }
+
+	    public static double haversin(double val) {
+	        return Math.pow(Math.sin(val / 2), 2);
+	    }
+	    
+		public int compare(Comparendo c1, Comparendo c2)
+		{
+			
+			x1= c1.latitud;
+			x2= c2.latitud;
+			y1= c1.longitud;
+			y2= c2.longitud;
+			comp1= (int)distance( x1, y1, 4.647586, 74.078122);
+			comp2= (int)distance( x2, y2, 4.647586, 74.078122);
+			return comp1.compareTo(comp2);
+		}
+}
+	
 	public static class ComparadorXFecha implements Comparator<Comparendo>{
 
 		public int compare(Comparendo c1, Comparendo c2){
@@ -79,6 +126,12 @@ public class Comparendo implements Comparable<Comparendo> {
 																// eso asegura que cuando se agregen a la cola de  
 																// prioridad la cola quede  en orden ascendente
 		}
+		public static class ComparadorXLocalidad implements Comparator<Comparendo>{
+
+			public int compare(Comparendo c1, Comparendo c2){
+
+				return (c1.FECHA_HORA.compareTo(c2.FECHA_HORA))*(-1);
+		
 	}
 
-}
+}}}
