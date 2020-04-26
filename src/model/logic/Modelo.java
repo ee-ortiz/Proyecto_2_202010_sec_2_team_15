@@ -3,12 +3,14 @@ package model.logic;
 import model.data_structures.ArregloDinamico;
 import model.data_structures.Comparendo;
 import model.data_structures.Comparendo.ComparadorRequerimiento3C;
+import model.data_structures.Comparendo.ComparadorXCercania;
 import model.data_structures.Comparendo.ComparadorXFecha;
 import model.data_structures.Comparendo.ComparadorXGravedad;
 import model.data_structures.IArregloDinamico;
 import model.data_structures.LinearProbing;
 import model.data_structures.MaxColaCP;
 import model.data_structures.MaxHeapCP;
+import model.data_structures.MinPQ;
 import model.data_structures.Penalizaciones;
 import model.data_structures.Queue;
 import model.data_structures.RedBlackBST;
@@ -43,6 +45,8 @@ public class Modelo {
 	public final static int maximoNumeroDatosImpreso = 20;
 	public final static int valorAsterisco = 500;
 	public final static int valorAsterisco2 = 300;
+	private MinPQ<Comparendo> comps6;
+	private RedBlackBST<Double, Comparendo> comps7;
 
 
 	/**
@@ -55,10 +59,13 @@ public class Modelo {
 		comps3 = new MaxHeapCP<>(300000);
 		comps4 = new RedBlackBST<>();
 		comps5 = new RedBlackBST<>();
+		comps6= new MinPQ<>(300000);
+		comps7 =new RedBlackBST<>();
 		comparendos = new Queue<>();
 		numeroMInicialSP = comps.TamañoDeLaHastTable();
 		numeroMInicialLP = comps2.darTamanoHashTable();
 		objetoJsonGson = new GeoJSONProcessing();
+	
 	}
 
 	/**
@@ -619,9 +626,85 @@ public class Modelo {
 	// - El costo de los tiempos de espera hoy en día (cola)
 	public void requerimiento2C(){
 
+		
+
+			Penalizaciones pen = new Penalizaciones();
+			Iterator<Comparendo> iter = comparendos.iterator();
+			ComparadorXFecha  comparador = new ComparadorXFecha ();
+
+			while(iter.hasNext()){
+
+				Comparendo actual = iter.next();
+				comps3.insert(actual, comparador);
+			}
+
+			System.out.println("Fecha       | Comparendos procesados                 ***");
+			System.out.println("            | Comparendos que están en espera        ###");
+			System.out.println("-----------------------------------------------------------");
+
+			int numeroDia = 1;
+			while(!comps3.isEmpty()){
+
+				int conteo = 0;
+				while(conteo<1500 && !comps3.isEmpty()){
+
+					Comparendo actual = comps3.max();
+					if(actual.darNumeroDia() > numeroDia){
+						System.out.println(convertirDiaAFecha(numeroDia) + "  |  " + imprimirNAstericos(conteo/valorAsterisco2));
+						System.out.println("            |  " + imprimirNNumerales(numeroEnEspera(numeroDia)/valorAsterisco2));			
+						numeroDia ++;
+						break;
+					}
+					else{ 
+
+						String descripcion = actual.DES_INFRAC;
+						int diferenciaDia = numeroDia - actual.darNumeroDia();
+
+						comps3.delMax(comparador);
+						pen.agregar(descripcion, diferenciaDia);
+						conteo++;
+
+						if(conteo == 1500){
+							System.out.println(convertirDiaAFecha(numeroDia) + "  |  " + imprimirNAstericos(conteo/valorAsterisco2));
+							System.out.println("            |  " + imprimirNNumerales(numeroEnEspera(numeroDia)/valorAsterisco2));
+							numeroDia++;
+						}
+					}
+
+					if(comps3.isEmpty()){
+
+						while(numeroDia<=365){
+
+							System.out.println(convertirDiaAFecha(numeroDia) + "  |  " + imprimirNAstericos(conteo/valorAsterisco2));
+							System.out.println("            |  " + imprimirNNumerales(numeroEnEspera(numeroDia)/valorAsterisco2));
+							numeroDia++;
+							conteo = 0;
 
 
-	}
+						}
+					}
+				}
+
+			}
+
+			System.out.println("Cada * y # representa " + valorAsterisco2 + " Comparendos");
+			System.out.println();
+			System.out.println("El costo total que generan las penalizaciones en 2018 es: " + pen.costoTotal());
+			double prom400 = pen.darPromedio400(); double prom40 = pen.darPromedio4(); double prom4 = pen.darPromedio4();
+			double promediosSumados = prom400 + prom40 + prom4;
+			System.out.println("El número de días en promedio que debe esperar un comparendo es: " + promediosSumados/3);
+			System.out.println();
+			System.out.println("Costo diario del comparendo | Tiempo mínimo de espera (días) | Tiempo promedio de espera (días) | tiempo máximo espera (días)" );
+			System.out.println("$400                        | " +convertirA32(String.valueOf(pen.min400()))+ "| " + convertirA32(String.valueOf(pen.darPromedio400())) + "  | " + convertirA32(String.valueOf(pen.max400()))); 
+			System.out.println("$40                         | " +convertirA32(String.valueOf(pen.min40()))+ "| " + convertirA32(String.valueOf(pen.darPromedio40())) + "  | " + convertirA32(String.valueOf(pen.max40())));
+			System.out.println("$4                          | " +convertirA32(String.valueOf(pen.min4()))+ "| " + convertirA32(String.valueOf(pen.darPromedio4())) + "  | " + convertirA32(String.valueOf(pen.max4())));
+			
+			System.out.println();
+			comps3 = new MaxHeapCP<>(300000);
+
+		}
+
+	
 
 	public void requerimiento3C(){
 
@@ -810,7 +893,155 @@ public class Modelo {
 
 
 	}
+	public void requerimiento1B(int m)
+	{
 
+		ComparadorXCercania comparar = new ComparadorXCercania();
+
+		Iterator<Comparendo> iter = comparendos.iterator();
+
+		while(iter.hasNext()){
+
+			Comparendo actual = iter.next();
+			comps6.insert(actual, comparar);
+		}
+
+		Iterator<Comparendo> iter2 = comps6.iterator(comparar);
+
+		int conteo = 0;
+		System.out.println("Los primeros " + m + " comparendos mas cercanos son: ");
+
+		while(iter2.hasNext() && conteo <m ){
+
+			Comparendo actual = iter2.next();
+			System.out.println("-" + actual.retornarDatosRequerimiento1B());
+			conteo++;
+		}
+
+		// al final deja vaica la cola para ultilizarla en otro requerimiento
+		comps6 = new MinPQ<>(300000);
+		
+	}
+	public void requerimiento2b(String pDeteccion, String pVehiculo, String pServicio, 	String pLocalidad)
+	{
+		
+		Iterator<Comparendo> iter = comparendos.iterator();
+
+
+		while(iter.hasNext()){
+
+			Comparendo actual = iter.next();
+			
+			String KeyDeteccion =actual.MEDIO_DETE;
+			String KeyVehiculo= actual.CLASE_VEHI;
+			String keyServicio= actual.TIPO_SERVI;
+			String keyLocalidad=actual.LOCALIDAD;
+
+			comps2.put(KeyDeteccion+KeyVehiculo+keyServicio+keyLocalidad, actual);
+
+		}
+
+		String deteccionBuscar =pDeteccion; 
+		String vehiculoBuscar = pVehiculo;
+		String servicioBuscar=pServicio;
+		String localidadBuscar=pLocalidad;
+
+		Iterator<Comparendo> iter2 = comps2.getSet(deteccionBuscar+vehiculoBuscar+servicioBuscar+localidadBuscar);
+		int numeroComparendos;
+		try{
+
+			numeroComparendos = comps2.get(deteccionBuscar+vehiculoBuscar+servicioBuscar+localidadBuscar).size();
+			System.out.println("Fueron encontrados " + numeroComparendos +" comparendos que cumplian con el criterio de busqueda.");
+			if(numeroComparendos<=maximoNumeroDatosImpreso) System.out.println("Se muestran los primeros " + numeroComparendos + ":");
+			else System.out.println("Se muestran los primeros " + maximoNumeroDatosImpreso + ":");
+
+			int conteo = 0;
+			while(iter2.hasNext() && conteo< maximoNumeroDatosImpreso ){
+
+				Comparendo actual = iter2.next();
+				System.out.println("-" + actual.retornarDatosRequerimiento1A());
+				conteo ++;
+			}
+
+		}
+		catch(Exception e){
+
+			System.out.println("No se encontró nungun comparendo con los criterios de busqueda");	
+		}
+		System.out.println();
+		// vacio el linear probing para usarlo en otro requerimiento
+		comps2 = new LinearProbing<>(20011);
+	}
+	
+
+	public void requerimiento3B(double l1, double l2, String pVehiculo){
+	
+		
+		try{
+			Iterator<Comparendo> iter = comparendos.iterator();
+
+			while(iter.hasNext()){
+
+				Comparendo actual = iter.next();
+				comps7.put(actual.latitud, actual);
+
+			}
+
+			try{
+
+				Iterator<ArrayList<Comparendo>> iter2 = comps7.valuesInRange(l1, l2);
+				ArrayList<Comparendo> paraMostar = new ArrayList<Comparendo>();
+
+				while(iter2.hasNext()){
+
+					ArrayList<Comparendo> actual = iter2.next();
+
+					Iterator<Comparendo> compsIter = actual.iterator();
+
+					while(compsIter.hasNext()){
+
+						Comparendo CompAct = compsIter.next();
+						if(CompAct.CLASE_VEHI.equalsIgnoreCase(pVehiculo)) paraMostar.add(CompAct);
+					}
+
+
+
+				}
+
+				if(paraMostar.size() ==0) System.out.println("No se encontraron comparendos en el rango de fechas dado");
+				else if(paraMostar.size()<=maximoNumeroDatosImpreso){
+					System.out.println("Fueron encontrados " + paraMostar.size() +" comparendos que cumplian con el criterio de busqueda.");
+					System.out.println("Se muestran los primeros " + paraMostar.size() + ":");
+
+				}
+				else{
+					System.out.println("Fueron encontrados " + paraMostar.size() +" comparendos que cumplian con el criterio de busqueda.");
+					System.out.println("Se muestran los primeros " + maximoNumeroDatosImpreso + ":");
+				}
+
+				Iterator<Comparendo> iter3 =  paraMostar.iterator();
+
+				int conteo = 0;
+				while(iter3.hasNext() && conteo <=maximoNumeroDatosImpreso){
+
+					Comparendo actual = iter3.next();
+					System.out.println("-" + actual.retornarDatosRequerimiento1A());
+					conteo++;
+
+				}
+			}
+
+			catch(Exception e){ System.out.println("No se encontraron comparendos en el rango de fechas dado"); }
+
+		}
+		catch (Exception e){ System.out.println("El formato de fecha ingresado es inválido"); }
+
+		// vacio el arbol rojo-negro para ultilizaro en otros requerimientos
+		System.out.println();
+		comps7 = new RedBlackBST<>();
+	}
+
+	
 
 
 }

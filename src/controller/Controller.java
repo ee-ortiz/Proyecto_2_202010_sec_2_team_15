@@ -29,7 +29,7 @@ public class Controller {
 	private View view;
 
 	private boolean cargado;
-	public static String PATH = "./data/comparendos_dei_2018_small.geojson";
+	public static String PATH = "./data/Comparendos_DEI_2018_Bogotá_D.C_small.geojson";
 	public static String PATH2 = "./data/Comparendos_dei_2018_Bogotá_D.C.geojson";
 	public static String PATH3 = "./data/comparendos_mediano.geojson";
 	private Comparable<Comparendo>[] aOrdenar;
@@ -66,7 +66,7 @@ public class Controller {
 					modelo = new Modelo();
 
 					long start = System.currentTimeMillis();
-					modelo.cargar(PATH3);	
+					modelo.cargar(PATH);	
 					long end = System.currentTimeMillis();
 					view.printMessage("Tiempo de carga (s): " + (end-start)/1000.0);
 
@@ -126,16 +126,40 @@ public class Controller {
 
 				modelo.requerimiento3A(fecha1,fecha2, pLocalidad);
 				break;
-
 			case 5:
+				view.printMessage("Ingresa un numero M de comparendos");
+
+				int m;
+				m = lector.nextInt();
+
+				modelo.requerimiento1B(m);
 
 				break;
 
 			case 6:
+				
+				view.printMessage("Ingresa  medio de detección");
+				String deteccion = lector.next();
+				view.printMessage("Ingresa  clase de vehículo");
+				String vehiculo = lector.next();
+				view.printMessage("Ingresa  tipo de servicio");
+				String servicio = lector.next();
+				view.printMessage("Ingresa  tipo de localidad");
+				String localidad = lector.next();
+			
 
+				modelo.requerimiento2b(deteccion, vehiculo, servicio,localidad);
 				break;
 
 			case 7:
+				view.printMessage("Por favor ingrese la latitud menor");
+				double latitud1 = Double.parseDouble( lector.next());
+				view.printMessage("Por favor ingrese la latitud mayor)");
+				double latitud2 = Double.parseDouble(lector.next());
+				view.printMessage("Por favor ingrese un vehiculo");
+				String vehiculop = lector.next();
+
+				modelo.requerimiento3B(latitud1,latitud2, vehiculop);
 
 				break;
 
@@ -148,7 +172,7 @@ public class Controller {
 				break;
 
 			case 9:
-
+				modelo.requerimiento2C();
 				break;
 
 			case 10:
